@@ -70,7 +70,7 @@ flowchart TD
     R_Other --> OutputFormat
 
     subgraph OutputPhase["5. 格式化輸出與匯出"]
-        OutputFormat["依順序排列表格：熱量、蛋白質、脂肪、碳水、糖、膳食纖維、鈉"] --> RenderUI[產生標準黑白雙框標籤貼紙]
+        OutputFormat["依規定順序排列表格：<br/>1.熱量 2.蛋白質 3.脂肪<br/>(含飽和與反式) 4.碳水化合物<br/>(含糖與膳食纖維) 5.鈉"] --> RenderUI[產生標準黑白雙框標籤貼紙]
         RenderUI --> DrawChart[繪製三大營養素熱量圓餅圖]
         RenderUI --> ExportPng[下載高解析度標籤 PNG 貼紙]
         RenderUI --> CopyHtml["複製網頁用 HTML / CSS 程式碼"]
@@ -83,3 +83,4 @@ flowchart TD
     class Step1,Step2,Step3,Step4,List,SelectDB,AddCustom,SetCooked,SetServings,SumRaw,AdjLoss,R_Sodium,R_Cal,R_Fat,R_Sat,R_Other,RenderUI,DrawChart process;
     class InputSearch,ClickFinish,Aud1,Aud2,Aud3 check;
     class ExportPng,CopyHtml export;
+```

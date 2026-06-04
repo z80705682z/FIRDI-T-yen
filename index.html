@@ -257,7 +257,7 @@
             </button>
           </div>
           <textarea class="form-control" id="mermaidCodeInput" rows="22" style="font-family: monospace; font-size: 0.85rem; line-height: 1.4; resize: vertical; height: 400px; background: rgba(0,0,0,0.02); color: var(--text-primary);">
-graph TD
+flowchart TD
     Start([開始試算]) --> Step1[步驟一：輸入原料與重量]
     
     subgraph InputPhase["1. 配方輸入與參數設定"]
@@ -313,7 +313,7 @@ graph TD
     R_Other --> OutputFormat
 
     subgraph OutputPhase["5. 格式化輸出與匯出"]
-        OutputFormat["依順序排列表格：熱量、蛋白質、脂肪、碳水、糖、膳食纖維、鈉"] --> RenderUI[產生標準黑白雙框標籤貼紙]
+        OutputFormat["依規定順序排列表格：<br/>1.熱量 2.蛋白質 3.脂肪<br/>(含飽和與反式) 4.碳水化合物<br/>(含糖與膳食纖維) 5.鈉"] --> RenderUI[產生標準黑白雙框標籤貼紙]
         RenderUI --> DrawChart[繪製三大營養素熱量圓餅圖]
         RenderUI --> ExportPng[下載高解析度標籤 PNG 貼紙]
         RenderUI --> CopyHtml["複製網頁用 HTML / CSS 程式碼"]
