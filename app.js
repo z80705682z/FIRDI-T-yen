@@ -40,6 +40,8 @@ document.addEventListener('DOMContentLoaded', () => {
   setupEventListeners();
   renderAutocompleteDropdown('');
   updateUI();
+  // 延遲載入 Mermaid 流程圖以防 CDN 尚未加載完畢
+  setTimeout(renderMermaidLive, 500);
 });
 
 // Theme Toggle
@@ -121,6 +123,13 @@ function setupEventListeners() {
   document.getElementById('btnOpenCustomModal').addEventListener('click', openCustomModal);
   document.getElementById('btnCloseModal').addEventListener('click', closeCustomModal);
   document.getElementById('btnSaveCustomFood').addEventListener('click', saveCustomFoodFromModal);
+
+  // 導覽分頁切換事件
+  document.getElementById('tabCalcBtn').addEventListener('click', () => switchTab('calc'));
+  document.getElementById('tabPlaygroundBtn').addEventListener('click', () => switchTab('playground'));
+
+  // 重新渲染 Mermaid 事件
+  document.getElementById('btnUpdateMermaid').addEventListener('click', renderMermaidLive);
 }
 
 // 渲染自動完成下拉選單
@@ -1092,4 +1101,77 @@ function copyLabelHtml() {
   }).catch(() => {
     showToast("複製失敗，請手動複製", "error");
   });
+}
+
+// ----------------------------------------------------
+// 分頁切換與 Mermaid 流程圖 Live 渲染核心函數
+// ----------------------------------------------------
+function switchTab(tabName) {
+  const calcView = document.getElementById('calculatorView');
+  const playView = document.getElementById('playgroundView');
+  const calcBtn = document.getElementById('tabCalcBtn');
+  const playBtn = document.getElementById('tabPlaygroundBtn');
+
+  if (tabName === 'calc') {
+    calcView.style.display = 'grid';
+    playView.style.display = 'none';
+    
+    // 按鈕樣式切換
+    calcBtn.classList.add('active');
+    calcBtn.style.background = 'var(--bg-card)';
+    calcBtn.style.color = 'var(--primary)';
+    calcBtn.style.fontWeight = '600';
+    
+    playBtn.classList.remove('active');
+    playBtn.style.background = 'transparent';
+    playBtn.style.color = 'var(--text-secondary)';
+    playBtn.style.fontWeight = '400';
+  } else {
+    calcView.style.display = 'none';
+    playView.style.display = 'grid';
+    
+    // 按鈕樣式切換
+    playBtn.classList.add('active');
+    playBtn.style.background = 'var(--bg-card)';
+    playBtn.style.color = 'var(--primary)';
+    playBtn.style.fontWeight = '600';
+    
+    calcBtn.classList.remove('active');
+    calcBtn.style.background = 'transparent';
+    calcBtn.style.color = 'var(--text-secondary)';
+    calcBtn.style.fontWeight = '400';
+    
+    // 當切換到 Playground 分頁時，觸發一次渲染以確保大小合適
+    renderMermaidLive();
+  }
+}
+
+async function renderMermaidLive() {
+  const code = document.getElementById('mermaidCodeInput').value;
+  const output = document.getElementById('mermaidRenderOutput');
+  
+  // 清空舊的 Mermaid 屬性以促使重新渲染
+  output.removeAttribute('data-processed');
+  output.innerHTML = code;
+  
+  try {
+    if (window.mermaid) {
+      await window.mermaid.run({
+        nodes: [output]
+      });
+      // 成功渲染時微調 SVG 的寬度使其適配卡片
+      const svg = output.querySelector('svg');
+      if (svg) {
+        svg.style.maxWidth = '100%';
+        svg.style.height = 'auto';
+      }
+    }
+  } catch (err) {
+    console.error("Mermaid 渲染失敗: ", err);
+    // 當文法出錯時，不直接當掉，顯示出錯資訊給使用者看
+    output.innerHTML = `<div style="color: var(--danger); padding: 1rem; border: 1px dashed var(--danger); border-radius: 8px; width: 100%;">
+      <i class="ri-error-warning-line"></i> <strong>Mermaid 語法錯誤：</strong><br>
+      <code style="font-family: monospace; font-size: 0.8rem; display: block; margin-top: 0.5rem; white-space: pre-wrap;">${err.message || err}</code>
+    </div>`;
+  }
 }

@@ -761,3 +761,19 @@ header {
   border-top: 1px solid var(--border-color);
   padding-top: 1rem;
 }
+
+/* Playground Layout rules */
+@media (min-width: 1024px) {
+  #playgroundGrid {
+    grid-template-columns: 450px 1fr !important;
+  }
+}
+
+#mermaidCodeInput:focus {
+  background: var(--bg-card) !important;
+  border-color: var(--primary) !important;
+}
+
+#tabCalcBtn.active, #tabPlaygroundBtn.active {
+  box-shadow: var(--shadow-sm);
+}
