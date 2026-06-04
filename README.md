@@ -1,0 +1,104 @@
+# 營養標示自動試算與合規檢驗儀表板 (Nutrition Label Dashboard)
+
+本專案是一個符合台灣衛福部 (MOHW / FDA) 法規的**包裝食品營養標示自動試算與標籤產生器**。使用者可輸入配方原料克數與成品熟重，系統將會自動進行合規性稽核、計算營養密度，並產生符合台灣標準雙框格式的營養標示貼紙，支援下載為 PNG 圖片與複製 HTML 代碼。
+
+---
+
+## 🔗 系統流程圖 (GitHub 支援自動渲染)
+
+GitHub 會自動將下方的 Mermaid 語法渲染成精美的網頁流程圖：
+
+```mermaid
+flowchart TD
+    classDef startEnd fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#1e293b;
+    classDef process fill:#f1f5f9,stroke:#64748b,stroke-width:1px,color:#0f172a;
+    classDef check fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#78350f;
+    classDef export fill:#ecfdf5,stroke:#059669,stroke-width:2px,color:#065f46;
+
+    Start([開始試算]) --> Step1[步驟一：輸入原料與重量]
+    
+    subgraph InputPhase [1. 配方輸入與參數設定]
+        Step1 --> InputSearch{搜尋原料資料庫}
+        InputSearch -- 存在於預設庫 --> SelectDB[點選原料並輸入克數]
+        InputSearch -- 不存在於預設庫 --> AddCustom[點擊「新增自訂原料」\n輸入每 100g 營養素]
+        SelectDB --> List[加入配方清單]
+        AddCustom --> List
+        List --> Step2[步驟二：設定包裝與熟化參數]
+        Step2 --> SetCooked[輸入 成品總重量]
+        Step2 --> SetServings[輸入 每一份量 及 本包裝含份數]
+    end
+
+    SetCooked --> ClickFinish{點擊「結束配方輸入」按鈕}
+    
+    subgraph CalcPhase [2. 核心密度計算與損耗調整]
+        ClickFinish --> SumRaw[加總配方各原料營養素總量]
+        SumRaw --> AdjLoss[計算烘焙損耗調整：\n每100g密度 = 總營養素 / 成品總重量 * 100]
+    end
+
+    AdjLoss --> Step3[步驟三：法規合規性稽核]
+
+    subgraph AuditPhase [3. 中華民國衛福部法規合規檢驗]
+        Step3 --> Aud1{成品總重量是否小於原料總生重？}
+        Aud1 -- 否 --> Warn1[\警告：可能添加水分未申報/]
+        Aud1 -- 是 --> Aud2{份量 x 份數是否等於成品總重？}
+        
+        Aud2 -- 否 --> Warn2[\錯誤：包裝份數與總量邏輯不符/]
+        Aud2 -- 是 --> Aud3{碳水化合物是否大於等於糖+膳食纖維？}
+        
+        Aud3 -- 否 --> Warn3[\錯誤：原料營養素申報數值衝突/]
+        Aud3 -- 是 --> AudPass[稽核通過 / 生成合規報告]
+    end
+
+    Warn1 --> Aud2
+    Warn2 --> Aud3
+    Warn3 --> AudPass
+
+    AudPass --> Step4[步驟四：修約與0界值處理]
+
+    subgraph RoundingPhase [4. 台灣官方修約與零值轉換]
+        Step4 --> R_Sodium[鈉含量：四捨五入至「整數」\n小於等於 5mg 標示為 0]
+        Step4 --> R_Cal[熱量：小於等於 4kcal 標示為 0]
+        Step4 --> R_Fat[反式脂肪：小於等於 0.3g\n或總脂肪小於等於 0.7g 標示為 0]
+        Step4 --> R_Sat[飽和脂肪：小於等於 0.1g 標示為 0]
+        Step4 --> R_Other[其他蛋白質/脂肪/碳水/糖/纖維：\n四捨五入至小數一位，小於 0.5g 標示為 0]
+    end
+
+    R_Sodium --> OutputFormat
+    R_Cal --> OutputFormat
+    R_Fat --> OutputFormat
+    R_Sat --> OutputFormat
+    R_Other --> OutputFormat
+
+    subgraph OutputPhase [5. 格式化輸出與匯出]
+        OutputFormat[依規定順序排列表格：\n1.熱量 2.蛋白質 3.脂肪\n(含飽和與反式) 4.碳水化合物\n(含糖與膳食纖維) 5.鈉] --> RenderUI[產生標準黑白雙框標籤貼紙]
+        RenderUI --> DrawChart[繪製三大營養素熱量貢獻圓餅圖]
+        RenderUI --> ExportPng[下載高解析度標籤 PNG 貼紙]
+        RenderUI --> CopyHtml[複製網頁用 Inline CSS HTML 程式碼]
+    end
+
+    ExportPng --> EndNode([完成標籤製作])
+    CopyHtml --> EndNode
+
+    class Start,EndNode startEnd;
+    class Step1,Step2,Step3,Step4,List,SelectDB,AddCustom,SetCooked,SetServings,SumRaw,AdjLoss,R_Sodium,R_Cal,R_Fat,R_Sat,R_Other,RenderUI,DrawChart process;
+    class InputSearch,ClickFinish,Aud1,Aud2,Aud3 check;
+    class ExportPng,CopyHtml export;
+```
+
+---
+
+## 🛠️ 專案檔案清單
+本專案包含以下三個核心檔案，請全部上傳至 GitHub 專案目錄中：
+1. `index.html` - 主網頁結構與台灣標準版面預覽。
+2. `style.css` - 現代化 CSS 樣式系統（包含動態主題與毛玻璃質感）。
+3. `app.js` - 核心計算邏輯、台灣食品庫、合規審查器與 Canvas 下載圖片功能。
+
+## 💡 關鍵流程說明
+
+1. **烘焙損耗修正**：設定「成品總重量」後，系統會自動考量烹調過程中的水份流失，按比例調增每 100g 的各項營養密度。
+2. **食品法規防呆**：
+   - 檢查 $\text{本包裝含份數} \times \text{每一份量}$ 是否等於成品總重量。
+   - 檢查原料總生重是否與熟重邏輯相符。
+   - 檢查 $\text{碳水化合物} \ge \text{糖} + \text{膳食纖維}$ 的合理性。
+3. **官方修約規範**：自動將鈉含量修約至整數，並依衛福部規定對熱量（4kcal以下）、脂肪（0.5g以下）、飽和脂肪（0.1g以下）、反式脂肪（0.3g以下）、鈉（5mg以下）執行 0 標示規則。
+4. **自訂輸出順序**：最終標籤表格嚴格遵循 **熱量、蛋白質、脂肪（含飽和與反式）、碳水化合物（含糖與膳食纖維）、鈉** 的順序輸出。
